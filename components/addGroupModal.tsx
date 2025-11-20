@@ -1,109 +1,117 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Search } from 'lucide-react';
-import { fetchGroupDetails } from '../services/geminiService';
-import { Group } from '../types';
+import { Search, Loader } from 'lucide-react';
+import { NewGroupResponse } from '../types';
 
+// Propiedades que el modal recibe de App.tsx
 interface AddGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (group: Group) => void;
+  onGroupAdded: (group: NewGroupResponse) => void;
+  fetchGroupDetails: (groupName: string) => Promise<NewGroupResponse | null>;
 }
 
-const AddGroupModal: React.FC<AddGroupModalProps> = ({ isOpen, onClose, onAdd }) => {
-  const [query, setQuery] = useState('');
+const AddGroupModal: React.FC<AddGroupModalProps> = ({ isOpen, onClose, onGroupAdded, fetchGroupDetails }) => {
+  const [groupName, setGroupName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  const handleSearch = async () => {
+    if (!groupName.trim()) {
+      setError('Por favor, ingresa un nombre de grupo.');
+      return;
+    }
 
     setIsLoading(true);
-    setError('');
+    setError(null);
 
     try {
-      const details = await fetchGroupDetails(query);
+      const details = await fetchGroupDetails(groupName.trim());
+      
       if (details) {
-        const newGroup: Group = {
-          id: Date.now().toString(),
-          name: details.name,
-          description: details.description,
-          members: details.members,
-          themeColor: details.themeColor,
-          votes: 1, // Starts with 1 vote
-          imageUrl: `https://picsum.photos/seed/${details.name.replace(/\s/g, '')}/400/300`
-        };
-        onAdd(newGroup);
-        onClose();
-        setQuery('');
+        onGroupAdded(details);
+        setGroupName(''); // Limpiar el input
+        onClose(); // Cerrar el modal
       } else {
-        setError("Could not find details for this group.");
+        setError('No se pudieron obtener los detalles del grupo.');
       }
     } catch (err) {
-      setError("AI Service unavailable. Check API Key.");
+      console.error('Error al buscar grupo:', err);
+      setError('Ocurrió un error al conectar con el servicio.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl transform transition-all">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Sparkles className="text-yellow-400" />
-              Add New Group
-            </h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-              <X size={24} />
-            </button>
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+      <div 
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 transform transition-all duration-300 scale-100"
+        onClick={e => e.stopPropagation()} // Evita que el clic dentro cierre el modal
+      >
+        <div className="flex justify-between items-center border-b pb-3 mb-4">
+          <h2 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Añadir Nuevo Grupo K-Pop</h2>
+          <button 
+            onClick={onClose} 
+            className="text-gray-400 hover:text-gray-600 transition duration-150"
+            aria-label="Cerrar modal"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          Ingresa el nombre del grupo K-Pop que deseas añadir. La IA buscará sus detalles oficiales.
+        </p>
+
+        <div className="mb-4">
+          <label htmlFor="groupName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Nombre del Grupo
+          </label>
+          <div className="relative">
+            <input
+              id="groupName"
+              type="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Ej: Blackpink, BTS, TWICE..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+              disabled={isLoading}
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Group Name
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="e.g. NewJeans, BTS, SEVENTEEN..."
-                  className="w-full bg-slate-800 border border-slate-600 text-white rounded-xl py-3 pl-10 pr-4 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all"
-                  autoFocus
-                />
-                <Search className="absolute left-3 top-3.5 text-slate-500" size={18} />
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                AI will fetch the members, color theme, and description automatically.
-              </p>
-            </div>
+        {error && (
+          <div className="mb-4 p-3 text-sm font-medium text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300">
+            {error}
+          </div>
+        )}
 
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
-                {error}
-              </div>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-150 disabled:opacity-50"
+            disabled={isLoading}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSearch}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-150 disabled:opacity-50 flex items-center justify-center space-x-2"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                <span>Buscando...</span>
+              </>
+            ) : (
+              <span>Añadir Grupo</span>
             )}
-
-            <button
-              type="submit"
-              disabled={isLoading || !query.trim()}
-              className="w-full bg-pink-600 hover:bg-pink-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-pink-600/20 flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Summoning Info...
-                </>
-              ) : (
-                'Add to Poll'
-              )}
-            </button>
-          </form>
+          </button>
         </div>
       </div>
     </div>
