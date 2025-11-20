@@ -1,12 +1,15 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, Type } from "@google/generative-ai";
 import { NewGroupResponse } from "../types";
+
+// Inicialización: Define la clave API y el cliente (Solución 1)
 const API_KEY = import.meta.env.VITE_API_KEY;
-const ai = new GoogleGenerativeAI(apiKey: import.meta.env.VITE_API_KEY);
+const ai = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY as string);
 const modelId = "gemini-2.5-flash";
 
 export const fetchGroupDetails = async (groupName: string): Promise<NewGroupResponse | null> => {
   try {
-    const response = await ai.models.generateContent({
+    // Uso del método correcto (Solución 3)
+    const response = await ai.generateContent({
       model: modelId,
       contents: `Provide details for the K-Pop group "${groupName}". If the group doesn't exist or isn't K-Pop, provide generic details for a fictional K-Pop group named "${groupName}". Return a hex color code matching their official colors or vibe.`,
       config: {
@@ -45,7 +48,8 @@ export const fetchGroupDetails = async (groupName: string): Promise<NewGroupResp
 
 export const generateFanCheer = async (groupName: string): Promise<string> => {
   try {
-    const response = await ai.models.generateContent({
+    // Uso del método correcto (Solución 3)
+    const response = await ai.generateContent({
       model: modelId,
       contents: `Write a short, high-energy fan chant/cheer (max 2 sentences) for the K-Pop group "${groupName}". Include emojis.`,
       config: {
