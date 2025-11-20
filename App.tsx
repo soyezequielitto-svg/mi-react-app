@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Group } from './types';
-import GroupCard from './components/GroupCard';
-import AddGroupModal from './components/AddGroupModal';
+import GroupCard from './components/GroupCard.tsx';
+import AddGroupModal from './components/AddGroupModal.tsx';
 import { Plus, BarChart2, Trophy, Mic2, Search } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
