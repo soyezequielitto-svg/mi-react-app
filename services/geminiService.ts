@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NewGroupResponse } from "../types";
-
+const API_KEY = import.meta.env.VITE_API_KEY;
 const ai = new GoogleGenerativeAI(apiKey: import.meta.env.VITE_API_KEY);
 const modelId = "gemini-2.5-flash";
 
