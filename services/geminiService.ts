@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NewGroupResponse } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
 const modelId = "gemini-2.5-flash";
 
 export const fetchGroupDetails = async (groupName: string): Promise<NewGroupResponse | null> => {
